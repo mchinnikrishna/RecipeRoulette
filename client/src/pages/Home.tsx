@@ -7,6 +7,8 @@ import jacketImage from '@assets/stock_images/vintage_leather_jack_f971f6d2.jpg'
 import teeImage from '@assets/stock_images/vintage_band_t-shirt_613545d0.jpg';
 import sneakersImage from '@assets/stock_images/vintage_canvas_sneak_be3371b0.jpg';
 import denimImage from '@assets/stock_images/vintage_denim_jacket_53b25334.jpg';
+import distressedTeeImage from '@assets/stock_images/distressed_vintage_t_dcf2eb85.jpg';
+import leatherBootsImage from '@assets/stock_images/vintage_leather_boot_c6ea018f.jpg';
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
@@ -55,7 +57,7 @@ export default function Home() {
       description: 'Rare vintage band shirt with natural distressing and soft fade.',
       price: '89.99',
       category: 'T-Shirts',
-      imageUrl: teeImage,
+      imageUrl: distressedTeeImage,
       stock: 4,
     },
     {
@@ -64,7 +66,7 @@ export default function Home() {
       description: 'Authentic leather boots with character and premium construction.',
       price: '199.99',
       category: 'Shoes',
-      imageUrl: sneakersImage,
+      imageUrl: leatherBootsImage,
       stock: 6,
     },
   ];
