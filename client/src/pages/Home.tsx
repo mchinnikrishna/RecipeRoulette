@@ -9,6 +9,10 @@ import sneakersImage from '@assets/stock_images/vintage_canvas_sneak_be3371b0.jp
 import denimImage from '@assets/stock_images/vintage_denim_jacket_53b25334.jpg';
 import distressedTeeImage from '@assets/stock_images/distressed_vintage_t_dcf2eb85.jpg';
 import leatherBootsImage from '@assets/stock_images/vintage_leather_boot_c6ea018f.jpg';
+import woolSweaterImage from '@assets/stock_images/vintage_wool_sweater_e2913b5a.jpg';
+import flannelShirtImage from '@assets/stock_images/vintage_flannel_shir_c992cafd.jpg';
+import varsityJacketImage from '@assets/stock_images/vintage_varsity_jack_7c919ac4.jpg';
+import corduroyPantsImage from '@assets/stock_images/vintage_corduroy_pan_07855a04.jpg';
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
@@ -68,6 +72,42 @@ export default function Home() {
       category: 'Shoes',
       imageUrl: leatherBootsImage,
       stock: 6,
+    },
+    {
+      id: '7',
+      name: 'Vintage Wool Sweater',
+      description: 'Cozy vintage wool sweater with classic pattern and timeless style.',
+      price: '159.99',
+      category: 'Sweaters',
+      imageUrl: woolSweaterImage,
+      stock: 4,
+    },
+    {
+      id: '8',
+      name: 'Classic Flannel Shirt',
+      description: 'Soft vintage flannel shirt perfect for layering or casual wear.',
+      price: '79.99',
+      category: 'Shirts',
+      imageUrl: flannelShirtImage,
+      stock: 8,
+    },
+    {
+      id: '9',
+      name: 'Vintage Varsity Jacket',
+      description: 'Authentic varsity jacket with embroidered details and vintage charm.',
+      price: '299.99',
+      category: 'Jackets',
+      imageUrl: varsityJacketImage,
+      stock: 2,
+    },
+    {
+      id: '10',
+      name: 'Vintage Corduroy Pants',
+      description: 'Classic corduroy pants with perfect vintage fit and rich texture.',
+      price: '119.99',
+      category: 'Pants',
+      imageUrl: corduroyPantsImage,
+      stock: 5,
     },
   ];
 
