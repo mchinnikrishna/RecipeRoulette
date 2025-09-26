@@ -233,9 +233,11 @@ export default function Cart() {
                   <span data-testid="text-total">${total.toFixed(2)}</span>
                 </div>
               </div>
-              <Button className="w-full" size="lg" data-testid="button-checkout">
-                Proceed to Checkout
-              </Button>
+              <Link href="/checkout">
+                <Button className="w-full" size="lg" data-testid="button-checkout">
+                  Proceed to Checkout
+                </Button>
+              </Link>
               <Link href="/">
                 <Button variant="outline" className="w-full" data-testid="button-continue-shopping-cart">
                   Continue Shopping
