@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, timestamp, index, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, decimal, timestamp, index, jsonb, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -37,10 +37,12 @@ export const products = pgTable("products", {
 
 export const cartItems = pgTable("cart_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull(), // Removed foreign key reference for session-based carts
   productId: varchar("product_id").notNull().references(() => products.id),
   quantity: integer("quantity").notNull().default(1),
-});
+}, (table) => ({
+  uniqueUserProduct: unique().on(table.userId, table.productId),
+}));
 
 export const insertUserSchema = createInsertSchema(users);
 export const upsertUserSchema = createInsertSchema(users);

@@ -1,6 +1,6 @@
 import { users, products, cartItems, type User, type UpsertUser, type Product, type InsertProduct, type CartItem, type InsertCartItem } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -17,10 +17,10 @@ export interface IStorage {
   createProduct(product: InsertProduct): Promise<Product>;
   
   // Cart methods
-  getCartItems(userId: string): Promise<CartItem[]>;
+  getCartItems(userId: string): Promise<any[]>;
   addToCart(cartItem: InsertCartItem): Promise<CartItem>;
-  updateCartItemQuantity(id: string, quantity: number): Promise<CartItem | undefined>;
-  removeFromCart(id: string): Promise<void>;
+  updateCartItemQuantity(id: string, userId: string, quantity: number): Promise<CartItem | undefined>;
+  removeFromCart(id: string, userId: string): Promise<void>;
   clearCart(userId: string): Promise<void>;
 }
 
@@ -69,29 +69,50 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Cart methods
-  async getCartItems(userId: string): Promise<CartItem[]> {
-    return await db.select().from(cartItems).where(eq(cartItems.userId, userId));
+  async getCartItems(userId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: cartItems.id,
+        quantity: cartItems.quantity,
+        product: {
+          id: products.id,
+          name: products.name,
+          price: products.price,
+          imageUrl: products.imageUrl,
+          category: products.category,
+        },
+      })
+      .from(cartItems)
+      .innerJoin(products, eq(cartItems.productId, products.id))
+      .where(eq(cartItems.userId, userId));
   }
 
-  async addToCart(insertCartItem: InsertCartItem): Promise<CartItem> {
-    const [cartItem] = await db
+  async addToCart(cartItem: InsertCartItem): Promise<CartItem> {
+    // Use upsert with on conflict for atomicity
+    const [item] = await db
       .insert(cartItems)
-      .values(insertCartItem)
+      .values(cartItem)
+      .onConflictDoUpdate({
+        target: [cartItems.userId, cartItems.productId],
+        set: {
+          quantity: sql`${cartItems.quantity} + ${cartItem.quantity}`,
+        },
+      })
       .returning();
-    return cartItem;
+    return item;
   }
 
-  async updateCartItemQuantity(id: string, quantity: number): Promise<CartItem | undefined> {
+  async updateCartItemQuantity(id: string, userId: string, quantity: number): Promise<CartItem | undefined> {
     const [cartItem] = await db
       .update(cartItems)
       .set({ quantity })
-      .where(eq(cartItems.id, id))
+      .where(and(eq(cartItems.id, id), eq(cartItems.userId, userId)))
       .returning();
     return cartItem || undefined;
   }
 
-  async removeFromCart(id: string): Promise<void> {
-    await db.delete(cartItems).where(eq(cartItems.id, id));
+  async removeFromCart(id: string, userId: string): Promise<void> {
+    await db.delete(cartItems).where(and(eq(cartItems.id, id), eq(cartItems.userId, userId)));
   }
 
   async clearCart(userId: string): Promise<void> {

@@ -1,9 +1,27 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import session from "express-session";
 import { storage } from "./storage";
-import { insertProductSchema } from "@shared/schema";
+import { insertProductSchema, insertCartItemSchema } from "@shared/schema";
+
+// Extend session type to include sessionId
+declare module 'express-session' {
+  interface SessionData {
+    sessionId: string;
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Session configuration for cart storage
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'vintageThreadsSecret',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { 
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+    }
+  }));
   // Products API
   app.get("/api/products", async (req, res) => {
     try {
@@ -49,11 +67,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Cart API (will implement after auth)
+  // Cart API with session-based storage
   app.get("/api/cart", async (req, res) => {
     try {
-      // For now, return empty cart - will implement after auth
-      res.json([]);
+      const sessionId = req.sessionID;
+      const cartItems = await storage.getCartItems(sessionId);
+      res.json(cartItems);
     } catch (error) {
       console.error('Error fetching cart:', error);
       res.status(500).json({ error: 'Failed to fetch cart' });
@@ -62,11 +81,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/cart", async (req, res) => {
     try {
-      // For now, return success - will implement after auth
-      res.json({ success: true, message: 'Item added to cart' });
+      const sessionId = req.sessionID;
+      const { productId, quantity = 1 } = req.body;
+      
+      const cartItemData = insertCartItemSchema.parse({
+        userId: sessionId,
+        productId,
+        quantity
+      });
+      
+      const cartItem = await storage.addToCart(cartItemData);
+      res.json(cartItem);
     } catch (error) {
       console.error('Error adding to cart:', error);
       res.status(500).json({ error: 'Failed to add to cart' });
+    }
+  });
+
+  app.put("/api/cart/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { quantity } = req.body;
+      const sessionId = req.sessionID;
+      
+      const cartItem = await storage.updateCartItemQuantity(id, sessionId, quantity);
+      if (!cartItem) {
+        return res.status(404).json({ error: 'Cart item not found' });
+      }
+      
+      res.json(cartItem);
+    } catch (error) {
+      console.error('Error updating cart item:', error);
+      res.status(500).json({ error: 'Failed to update cart item' });
+    }
+  });
+
+  app.delete("/api/cart/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const sessionId = req.sessionID;
+      await storage.removeFromCart(id, sessionId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error removing cart item:', error);
+      res.status(500).json({ error: 'Failed to remove cart item' });
+    }
+  });
+
+  app.delete("/api/cart", async (req, res) => {
+    try {
+      const sessionId = req.sessionID;
+      await storage.clearCart(sessionId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      res.status(500).json({ error: 'Failed to clear cart' });
     }
   });
 

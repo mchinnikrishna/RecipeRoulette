@@ -3,10 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+
+interface CartItem {
+  id: string;
+  quantity: number;
+}
 
 export default function Header() {
-  const [cartCount, setCartCount] = useState(3); //todo: remove mock functionality
   const [searchQuery, setSearchQuery] = useState("");
+  
+  const { data: cartItems = [] } = useQuery<CartItem[]>({
+    queryKey: ["/api/cart"],
+  });
+  
+  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
@@ -39,14 +50,16 @@ export default function Header() {
               Login
             </Button>
             
-            <Button variant="ghost" size="icon" className="relative" data-testid="button-cart">
-              <ShoppingCart className="h-4 w-4" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                  {cartCount}
-                </span>
-              )}
-            </Button>
+            <Link href="/cart">
+              <Button variant="ghost" size="icon" className="relative" data-testid="button-cart">
+                <ShoppingCart className="h-4 w-4" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                    {cartCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
           </nav>
         </div>
       </div>
