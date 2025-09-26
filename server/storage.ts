@@ -1,4 +1,4 @@
-import { users, products, cartItems, type User, type InsertUser, type Product, type InsertProduct, type CartItem, type InsertCartItem } from "@shared/schema";
+import { users, products, cartItems, type User, type UpsertUser, type Product, type InsertProduct, type CartItem, type InsertCartItem } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -6,11 +6,9 @@ import { eq } from "drizzle-orm";
 // you might need
 
 export interface IStorage {
-  // User methods
+  // User methods (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<User>;
   
   // Product methods
   getAllProducts(): Promise<Product[]>;
@@ -27,26 +25,23 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // User methods
+  // User methods (required for Replit Auth)
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user || undefined;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values(insertUser)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
       .returning();
     return user;
   }
