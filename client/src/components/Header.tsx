@@ -1,9 +1,13 @@
-import { ShoppingCart, User, Search } from "lucide-react";
+import { ShoppingCart, User, Search, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import type { User as UserType } from "@shared/schema";
 
 interface CartItem {
   id: string;
@@ -12,12 +16,21 @@ interface CartItem {
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { user, isAuthenticated, isLoading } = useAuth() as { user: UserType | undefined, isAuthenticated: boolean, isLoading: boolean };
   
   const { data: cartItems = [] } = useQuery<CartItem[]>({
     queryKey: ["/api/cart"],
   });
   
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+  const handleLogin = () => {
+    window.location.href = "/api/login";
+  };
+
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
@@ -45,10 +58,38 @@ export default function Header() {
 
           {/* Navigation */}
           <nav className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" data-testid="button-login">
-              <User className="h-4 w-4 mr-2" />
-              Login
-            </Button>
+            {!isLoading && (
+              <>
+                {!isAuthenticated ? (
+                  <Button variant="ghost" size="sm" onClick={handleLogin} data-testid="button-login">
+                    <User className="h-4 w-4 mr-2" />
+                    Login
+                  </Button>
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="flex items-center space-x-2" data-testid="button-user-menu">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={user?.profileImageUrl || undefined} />
+                          <AvatarFallback className="text-xs">
+                            {user?.firstName?.[0] || user?.email?.[0] || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="hidden sm:block">
+                          {user?.firstName || user?.email?.split('@')[0] || 'User'}
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleLogout} data-testid="button-logout">
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </>
+            )}
             
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative" data-testid="button-cart">
