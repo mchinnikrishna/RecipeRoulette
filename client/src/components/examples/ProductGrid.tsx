@@ -1,7 +1,8 @@
 import ProductGrid from '../ProductGrid'
-import jacketImage from '@assets/generated_images/Vintage_leather_jacket_product_c29e4583.png';
-import teeImage from '@assets/generated_images/Vintage_graphic_tee_product_b3aafa6d.png';
-import sneakersImage from '@assets/generated_images/Vintage_sneakers_product_image_8216a1de.png';
+import jacketImage from '@assets/stock_images/vintage_leather_jack_f971f6d2.jpg';
+import teeImage from '@assets/stock_images/vintage_band_t-shirt_613545d0.jpg';
+import sneakersImage from '@assets/stock_images/vintage_canvas_sneak_be3371b0.jpg';
+import denimImage from '@assets/stock_images/vintage_denim_jacket_53b25334.jpg';
 
 export default function ProductGridExample() {
   const mockProducts = [ //todo: remove mock functionality
@@ -38,7 +39,7 @@ export default function ProductGridExample() {
       description: 'Perfectly worn denim jacket with authentic vintage patina.',
       price: '189.99',
       category: 'Jackets',
-      imageUrl: jacketImage,
+      imageUrl: denimImage,
       stock: 5,
     },
   ];

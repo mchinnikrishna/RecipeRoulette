@@ -1,5 +1,5 @@
 import ProductCard from '../ProductCard'
-import jacketImage from '@assets/generated_images/Vintage_leather_jacket_product_c29e4583.png';
+import jacketImage from '@assets/stock_images/vintage_leather_jack_f971f6d2.jpg';
 
 export default function ProductCardExample() {
   const mockProduct = { //todo: remove mock functionality

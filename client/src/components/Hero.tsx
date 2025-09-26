@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import heroImage from '@assets/generated_images/Vintage_clothing_hero_background_6a1f68a5.png';
+import heroImage from '@assets/stock_images/dark_atmospheric_clo_c8de57c9.jpg';
 
 export default function Hero() {
   return (
