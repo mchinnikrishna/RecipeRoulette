@@ -1,27 +1,24 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import session from "express-session";
 import { storage } from "./storage";
 import { insertProductSchema, insertCartItemSchema } from "@shared/schema";
-
-// Extend session type to include sessionId
-declare module 'express-session' {
-  interface SessionData {
-    sessionId: string;
-  }
-}
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session configuration for cart storage
-  app.use(session({
-    secret: process.env.SESSION_SECRET || 'vintageThreadsSecret',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { 
-      secure: false, // Set to true in production with HTTPS
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+  // Auth middleware
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
     }
-  }));
+  });
   // Products API
   app.get("/api/products", async (req, res) => {
     try {
@@ -67,11 +64,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Cart API with session-based storage
+  // Cart API with session-based storage (supports both authenticated and guest users)
   app.get("/api/cart", async (req, res) => {
     try {
-      const sessionId = req.sessionID;
-      const cartItems = await storage.getCartItems(sessionId);
+      // Use authenticated user ID if available, otherwise fall back to session ID
+      const userId = req.isAuthenticated() ? (req.user as any).claims.sub : req.sessionID;
+      const cartItems = await storage.getCartItems(userId);
       res.json(cartItems);
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -81,11 +79,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/cart", async (req, res) => {
     try {
-      const sessionId = req.sessionID;
+      // Use authenticated user ID if available, otherwise fall back to session ID
+      const userId = req.isAuthenticated() ? (req.user as any).claims.sub : req.sessionID;
       const { productId, quantity = 1 } = req.body;
       
       const cartItemData = insertCartItemSchema.parse({
-        userId: sessionId,
+        userId,
         productId,
         quantity
       });
@@ -102,9 +101,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { quantity } = req.body;
-      const sessionId = req.sessionID;
+      const userId = req.isAuthenticated() ? (req.user as any).claims.sub : req.sessionID;
       
-      const cartItem = await storage.updateCartItemQuantity(id, sessionId, quantity);
+      const cartItem = await storage.updateCartItemQuantity(id, userId, quantity);
       if (!cartItem) {
         return res.status(404).json({ error: 'Cart item not found' });
       }
@@ -119,8 +118,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/cart/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const sessionId = req.sessionID;
-      await storage.removeFromCart(id, sessionId);
+      const userId = req.isAuthenticated() ? (req.user as any).claims.sub : req.sessionID;
+      await storage.removeFromCart(id, userId);
       res.json({ success: true });
     } catch (error) {
       console.error('Error removing cart item:', error);
@@ -130,8 +129,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/cart", async (req, res) => {
     try {
-      const sessionId = req.sessionID;
-      await storage.clearCart(sessionId);
+      const userId = req.isAuthenticated() ? (req.user as any).claims.sub : req.sessionID;
+      await storage.clearCart(userId);
       res.json({ success: true });
     } catch (error) {
       console.error('Error clearing cart:', error);
