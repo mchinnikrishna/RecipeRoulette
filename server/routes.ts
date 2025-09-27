@@ -3,17 +3,86 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProductSchema, insertCartItemSchema } from "@shared/schema";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { registerUser, loginUser, requireAuth, getAuthenticatedUser, type LocalAuthRequest } from "./localAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  // Local Auth routes
+  app.post('/api/auth/register', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      const { email, password, firstName, lastName } = req.body;
+      
+      if (!email || !password || !firstName) {
+        return res.status(400).json({ message: "Email, password, and first name are required" });
+      }
+
+      const user = await registerUser(email, password, firstName, lastName);
+      
+      // Set session
+      (req.session as any).userId = user.id;
+      
+      res.status(201).json({ 
+        message: "User registered successfully",
+        user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName }
+      });
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      res.status(400).json({ message: error.message || "Registration failed" });
+    }
+  });
+
+  app.post('/api/auth/login', async (req: any, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const user = await loginUser(email, password);
+      
+      // Set session
+      (req.session as any).userId = user.id;
+      
+      res.json({ 
+        message: "Login successful",
+        user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName }
+      });
+    } catch (error: any) {
+      console.error("Login error:", error);
+      res.status(401).json({ message: error.message || "Login failed" });
+    }
+  });
+
+  app.post('/api/auth/logout', (req: any, res) => {
+    req.session?.destroy((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.json({ message: "Logout successful" });
+    });
+  });
+
+  // Auth routes (supporting both local and Replit auth)
+  app.get('/api/auth/user', async (req: any, res) => {
+    try {
+      // Try local auth first
+      const localUser = await getAuthenticatedUser(req);
+      if (localUser) {
+        return res.json(localUser);
+      }
+
+      // Fall back to Replit auth if available
+      if (req.isAuthenticated && req.isAuthenticated() && (req.user as any)?.claims?.sub) {
+        const userId = (req.user as any).claims.sub;
+        const user = await storage.getUser(userId);
+        return res.json(user);
+      }
+
+      res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -64,11 +133,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to get user ID from both auth systems
+  const getUserId = async (req: any) => {
+    // Check local auth first
+    const localUserId = (req.session as any)?.userId;
+    if (localUserId) {
+      return localUserId;
+    }
+    
+    // Fall back to Replit auth
+    if (req.isAuthenticated && req.isAuthenticated() && (req.user as any)?.claims?.sub) {
+      return (req.user as any).claims.sub;
+    }
+    
+    // Fall back to session ID for guests
+    return req.sessionID;
+  };
+
   // Cart API with session-based storage (supports both authenticated and guest users)
   app.get("/api/cart", async (req, res) => {
     try {
-      // Use authenticated user ID if available, otherwise fall back to session ID
-      const userId = req.isAuthenticated() ? (req.user as any).claims.sub : req.sessionID;
+      const userId = await getUserId(req);
       const cartItems = await storage.getCartItems(userId);
       res.json(cartItems);
     } catch (error) {
@@ -79,8 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/cart", async (req, res) => {
     try {
-      // Use authenticated user ID if available, otherwise fall back to session ID
-      const userId = req.isAuthenticated() ? (req.user as any).claims.sub : req.sessionID;
+      const userId = await getUserId(req);
       const { productId, quantity = 1 } = req.body;
       
       const cartItemData = insertCartItemSchema.parse({
@@ -101,7 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { quantity } = req.body;
-      const userId = req.isAuthenticated() ? (req.user as any).claims.sub : req.sessionID;
+      const userId = await getUserId(req);
       
       const cartItem = await storage.updateCartItemQuantity(id, userId, quantity);
       if (!cartItem) {
@@ -118,7 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/cart/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const userId = req.isAuthenticated() ? (req.user as any).claims.sub : req.sessionID;
+      const userId = await getUserId(req);
       await storage.removeFromCart(id, userId);
       res.json({ success: true });
     } catch (error) {
@@ -129,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/cart", async (req, res) => {
     try {
-      const userId = req.isAuthenticated() ? (req.user as any).claims.sub : req.sessionID;
+      const userId = await getUserId(req);
       await storage.clearCart(userId);
       res.json({ success: true });
     } catch (error) {

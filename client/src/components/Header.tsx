@@ -5,8 +5,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { apiRequest } from "@/lib/queryClient";
+import LoginModal from "./LoginModal";
 import type { User as UserType } from "@shared/schema";
 
 interface CartItem {
@@ -16,7 +18,9 @@ interface CartItem {
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const { user, isAuthenticated, isLoading } = useAuth() as { user: UserType | undefined, isAuthenticated: boolean, isLoading: boolean };
+  const queryClient = useQueryClient();
   
   const { data: cartItems = [] } = useQuery<CartItem[]>({
     queryKey: ["/api/cart"],
@@ -24,12 +28,20 @@ export default function Header() {
   
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
+  const logoutMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/auth/logout"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    },
+  });
+
   const handleLogin = () => {
-    window.location.href = "/api/login";
+    setLoginModalOpen(true);
   };
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    logoutMutation.mutate();
   };
 
   return (
@@ -104,6 +116,8 @@ export default function Header() {
           </nav>
         </div>
       </div>
+      
+      <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} />
     </header>
   );
 }
