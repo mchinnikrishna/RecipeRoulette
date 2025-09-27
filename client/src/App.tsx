@@ -11,6 +11,13 @@ import ProductDetail from "@/pages/ProductDetail";
 import Cart from "@/pages/Cart";
 import Checkout from "@/pages/Checkout";
 import Category from "@/pages/Category";
+import ContactUs from "@/pages/ContactUs";
+import ShippingInfo from "@/pages/ShippingInfo";
+import Returns from "@/pages/Returns";
+import SizeGuide from "@/pages/SizeGuide";
+import FAQ from "@/pages/FAQ";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfService from "@/pages/TermsOfService";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -21,6 +28,16 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/category/:category" component={Category} />
+      
+      {/* Customer Service Pages */}
+      <Route path="/contact" component={ContactUs} />
+      <Route path="/shipping" component={ShippingInfo} />
+      <Route path="/returns" component={Returns} />
+      <Route path="/size-guide" component={SizeGuide} />
+      <Route path="/faq" component={FAQ} />
+      <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/terms" component={TermsOfService} />
+      
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
