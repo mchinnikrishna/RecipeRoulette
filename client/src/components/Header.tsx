@@ -31,8 +31,21 @@ export default function Header() {
   const logoutMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/auth/logout"),
     onSuccess: () => {
+      // Clear the user data immediately
+      queryClient.setQueryData(["/api/auth/user"], null);
+      queryClient.setQueryData(["/api/cart"], []);
+      
+      // Invalidate queries to refetch fresh data
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      
+      // Force a window reload as fallback to ensure clean state
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    },
+    onError: (error) => {
+      console.error("Logout failed:", error);
     },
   });
 
