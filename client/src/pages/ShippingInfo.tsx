@@ -1,7 +1,52 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Truck, Clock, MapPin, Package } from 'lucide-react';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ShippingInfo() {
+  const { toast } = useToast();
+  const [addressData, setAddressData] = useState({
+    fullName: '',
+    address1: '',
+    address2: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'United States'
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleInputChange = (field: string, value: string) => {
+    setAddressData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    // Simulate form submission
+    setTimeout(() => {
+      toast({
+        title: "Address Saved",
+        description: "Your shipping address has been saved successfully.",
+      });
+      setIsSubmitting(false);
+      // Reset form
+      setAddressData({
+        fullName: '',
+        address1: '',
+        address2: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: 'United States'
+      });
+    }, 1000);
+  };
+
   return (
     <div className="min-h-screen bg-background py-16">
       <div className="container mx-auto px-4">
@@ -158,6 +203,108 @@ export default function ShippingInfo() {
                   <li>• Adult signature for high-value items</li>
                 </ul>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Address Entry Form */}
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                Enter Your Shipping Address
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="fullName">Full Name *</Label>
+                    <Input
+                      id="fullName"
+                      value={addressData.fullName}
+                      onChange={(e) => handleInputChange('fullName', e.target.value)}
+                      required
+                      data-testid="input-full-name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="country">Country</Label>
+                    <Input
+                      id="country"
+                      value={addressData.country}
+                      onChange={(e) => handleInputChange('country', e.target.value)}
+                      data-testid="input-country"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="address1">Address Line 1 *</Label>
+                  <Input
+                    id="address1"
+                    value={addressData.address1}
+                    onChange={(e) => handleInputChange('address1', e.target.value)}
+                    placeholder="Street address, P.O. box, company name"
+                    required
+                    data-testid="input-address1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="address2">Address Line 2</Label>
+                  <Input
+                    id="address2"
+                    value={addressData.address2}
+                    onChange={(e) => handleInputChange('address2', e.target.value)}
+                    placeholder="Apartment, suite, unit, building, floor, etc."
+                    data-testid="input-address2"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="city">City *</Label>
+                    <Input
+                      id="city"
+                      value={addressData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      required
+                      data-testid="input-city"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="state">State *</Label>
+                    <Input
+                      id="state"
+                      value={addressData.state}
+                      onChange={(e) => handleInputChange('state', e.target.value)}
+                      required
+                      data-testid="input-state"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="zipCode">ZIP Code *</Label>
+                    <Input
+                      id="zipCode"
+                      value={addressData.zipCode}
+                      onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                      required
+                      data-testid="input-zip"
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full md:w-auto"
+                  disabled={isSubmitting}
+                  data-testid="button-submit-address"
+                >
+                  {isSubmitting ? 'Saving...' : 'Save Shipping Address'}
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </div>
