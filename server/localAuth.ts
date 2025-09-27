@@ -23,17 +23,21 @@ export async function registerUser(email: string, password: string, firstName: s
   const saltRounds = 10;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+  // Create username from email (part before @)
+  const username = email.split('@')[0];
+
   // Create user with hashed password
   const userId = crypto.randomUUID();
   await storage.createUser({
     id: userId,
+    username,
     email,
     password: hashedPassword,
     firstName,
     lastName,
   });
 
-  return { id: userId, email, firstName, lastName };
+  return { id: userId, username, email, firstName, lastName };
 }
 
 export async function loginUser(email: string, password: string) {
@@ -51,6 +55,7 @@ export async function loginUser(email: string, password: string) {
 
   return {
     id: user.id,
+    username: user.username,
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,

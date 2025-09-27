@@ -28,8 +28,9 @@ export const sessions = pgTable(
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const users = pgTable("users", {
   id: varchar("id").primaryKey(),
-  email: varchar("email").unique(),
-  password: varchar("password"), // For local authentication
+  username: text("username").notNull(), // Username is required in the database
+  email: text("email").unique().notNull(),
+  password: text("password").notNull(), // For local authentication
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -43,11 +44,11 @@ export type User = typeof users.$inferSelect;
 // Products table
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name", { length: 255 }).notNull(),
+  name: text("name").notNull(),
   description: text("description"),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
-  category: varchar("category", { length: 100 }).notNull(),
-  imageUrl: varchar("image_url", { length: 500 }),
+  category: text("category").notNull(),
+  imageUrl: text("image_url"),
   stock: integer("stock").default(0),
   isAvailable: varchar("is_available").default("true"),
   createdAt: timestamp("created_at").defaultNow(),
