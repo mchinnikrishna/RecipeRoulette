@@ -51,14 +51,20 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-foreground mb-4">Customer Service</h3>
             <ul className="space-y-2">
-              {['Contact Us', 'Shipping Info', 'Returns', 'Size Guide', 'FAQ'].map((item) => (
-                <li key={item}>
+              {[
+                { name: 'Contact Us', href: '/contact' },
+                { name: 'Shipping Info', href: '/shipping' },
+                { name: 'Returns', href: '/returns' },
+                { name: 'Size Guide', href: '/size-guide' },
+                { name: 'FAQ', href: '/faq' }
+              ].map((item) => (
+                <li key={item.name}>
                   <Link 
-                    href={`/${item.toLowerCase().replace(' ', '-')}`} 
+                    href={item.href}
                     className="text-muted-foreground hover:text-primary transition-colors"
-                    data-testid={`link-service-${item.toLowerCase().replace(' ', '-')}`}
+                    data-testid={`link-service-${item.name.toLowerCase().replace(' ', '-')}`}
                   >
-                    {item}
+                    {item.name}
                   </Link>
                 </li>
               ))}

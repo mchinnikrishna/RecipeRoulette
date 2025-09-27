@@ -107,18 +107,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addToCart(cartItem: InsertCartItem): Promise<CartItem> {
-    // Use upsert with on conflict for atomicity
-    const [item] = await db
-      .insert(cartItems)
-      .values(cartItem)
-      .onConflictDoUpdate({
-        target: [cartItems.userId, cartItems.productId],
-        set: {
-          quantity: sql`${cartItems.quantity} + ${cartItem.quantity}`,
-        },
-      })
-      .returning();
-    return item;
+    // Check if item already exists in cart
+    const existingItem = await db
+      .select()
+      .from(cartItems)
+      .where(and(eq(cartItems.userId, cartItem.userId), eq(cartItems.productId, cartItem.productId)))
+      .limit(1);
+
+    if (existingItem.length > 0) {
+      // Update existing item quantity
+      const [item] = await db
+        .update(cartItems)
+        .set({ quantity: (existingItem[0].quantity || 0) + (cartItem.quantity || 1) })
+        .where(eq(cartItems.id, existingItem[0].id))
+        .returning();
+      return item;
+    } else {
+      // Insert new item
+      const [item] = await db
+        .insert(cartItems)
+        .values(cartItem)
+        .returning();
+      return item;
+    }
   }
 
   async updateCartItemQuantity(id: string, userId: string, quantity: number): Promise<CartItem | undefined> {
