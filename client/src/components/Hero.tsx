@@ -41,6 +41,7 @@ export default function Hero() {
             size="lg" 
             className="text-lg px-8 py-6 bg-background/20 backdrop-blur-sm border border-border"
             data-testid="button-explore-collection"
+            onClick={() => window.location.href = "/category/shop-all"}
           >
             Explore Collection
           </Button>
