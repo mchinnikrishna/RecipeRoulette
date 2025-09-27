@@ -57,7 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post('/api/auth/logout', (req: any, res) => {
-    req.session?.destroy((err) => {
+    req.session?.destroy((err: any) => {
       if (err) {
         console.error("Logout error:", err);
         return res.status(500).json({ message: "Logout failed" });
