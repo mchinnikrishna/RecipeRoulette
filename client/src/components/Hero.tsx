@@ -28,6 +28,10 @@ export default function Hero() {
             size="lg" 
             className="text-lg px-8 py-6 bg-primary/90 backdrop-blur-sm border border-primary-border"
             data-testid="button-shop-now"
+            onClick={() => {
+              const productsSection = document.querySelector('[data-section="products"]');
+              productsSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
           >
             Shop Now
           </Button>
