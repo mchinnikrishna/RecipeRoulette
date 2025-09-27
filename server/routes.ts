@@ -146,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return (req.user as any).claims.sub;
     }
     
-    // Fall back to session ID for guests
+    // For guest users, use session ID (now properly maintained)
     return req.sessionID;
   };
 

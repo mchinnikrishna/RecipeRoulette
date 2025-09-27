@@ -35,7 +35,7 @@ export function getSession() {
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true, // Allow sessions for guest users
     cookie: {
       httpOnly: true,
       secure: false, // Set to true in production with HTTPS
